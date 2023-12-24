@@ -1,4 +1,5 @@
 array (
+  'action' => 'download',
   'md_src' => '# 見出し1
 parsedownのサンプルです。   
 parsedownのサンプルです。   
