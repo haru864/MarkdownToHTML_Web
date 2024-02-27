@@ -1,21 +1,13 @@
 .container {
     display: flex;
-    /* Flexboxを有効にする */
     align-items: center;
-    /* 子要素を中央揃えにする */
-}
-
-.buttons {
-    display: flex;
-    /* Flexboxを有効にする */
-    flex-direction: column;
-    /* 子要素を縦並びにする */
-    margin-left: 10px;
-    /* 左の要素との間隔を設定 */
 }
 
 .container>div,
 .buttons>button {
     margin-bottom: 10px;
-    /* 下の要素との間隔を設定 */
+}
+
+#html-preview {
+    overflow: auto;
 }

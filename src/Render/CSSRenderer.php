@@ -22,7 +22,7 @@ class CSSRenderer implements HTTPRenderer
     public function getFields(): array
     {
         return [
-            'Content-Type' => 'text/javascript',
+            'Content-Type' => 'text/css',
         ];
     }
 
@@ -30,7 +30,7 @@ class CSSRenderer implements HTTPRenderer
     {
         $cssFileBasename = $this->getScriptFilePath($this->cssFileBasename);
         if (!file_exists($cssFileBasename)) {
-            throw new \Exception("JavaScript file '{$cssFileBasename}' does not exist.");
+            throw new \Exception("CSS file '{$cssFileBasename}' does not exist.");
         }
         return file_get_contents($cssFileBasename);
     }
