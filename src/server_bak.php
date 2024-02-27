@@ -4,7 +4,6 @@ $parsedown = new Parsedown();
 $parsedown->setSafeMode(true);
 
 if ($_SERVER['REQUEST_METHOD'] == 'GET') {
-    // $html = file_get_contents('index.html');
     $html = file_get_contents('test.html');
     echo $html;
 } else if ($_SERVER['REQUEST_METHOD'] == 'POST') {
