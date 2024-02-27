@@ -11,6 +11,7 @@ $baseURL = Settings::env('BASE_URL');
 <head>
     <meta charset="UTF-8">
     <title>HTML Sample</title>
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/default.min.css">
     <style>
         .container {
             display: flex;
@@ -38,6 +39,7 @@ $baseURL = Settings::env('BASE_URL');
     <button type="button" id="highlight-btn">Highlight</button>
     <button type="button" id="download-btn">Download</button>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.20.0/min/vs/loader.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/highlight.min.js"></script>
     <script>
         require.config({
             paths: {
@@ -50,20 +52,18 @@ $baseURL = Settings::env('BASE_URL');
                 language: 'markdown'
             });
             window.editor.onDidChangeModelContent(async function() {
-                var markdownText = editor.getValue();
-                var htmlContent = await convertMarkdownToHTML();
-                document.getElementById('html-preview').innerHTML = htmlContent;
+                document.getElementById('html-preview').innerHTML = await convertMarkdownToHTML();
             });
         });
         async function convertMarkdownToHTML() {
             try {
-                var details = {
+                let details = {
                     'markdown': window.editor.getValue()
                 };
-                var formBody = [];
-                for (var property in details) {
-                    var encodedKey = encodeURIComponent(property);
-                    var encodedValue = encodeURIComponent(details[property]);
+                let formBody = [];
+                for (let property in details) {
+                    let encodedKey = encodeURIComponent(property);
+                    let encodedValue = encodeURIComponent(details[property]);
                     formBody.push(encodedKey + "=" + encodedValue);
                 }
                 formBody = formBody.join("&");
@@ -83,13 +83,24 @@ $baseURL = Settings::env('BASE_URL');
                 console.error('Error:', error);
             }
         }
+        document.getElementById("preview-btn").addEventListener("click", async function() {
+            document.getElementById('html-preview').innerHTML = await convertMarkdownToHTML();
+        });
+        document.getElementById("html-btn").addEventListener("click", async function() {
+            document.getElementById('html-preview').innerHTML = await convertMarkdownToHTML();
+            let htmlSrc = document.getElementById('html-preview').innerHTML;
+            document.getElementById('html-preview').textContent = htmlSrc;
+        });
+        document.getElementById("highlight-btn").addEventListener("click", async function() {
+            hljs.highlightAll();
+        });
         document.getElementById("download-btn").addEventListener("click", async function() {
             let htmlSrc = document.getElementById('html-preview').innerHTML;
-            var blob = new Blob([htmlSrc], {
+            let blob = new Blob([htmlSrc], {
                 type: "text/html"
             });
-            var url = URL.createObjectURL(blob);
-            var a = document.createElement('a');
+            let url = URL.createObjectURL(blob);
+            let a = document.createElement('a');
             a.href = url;
             a.download = "download.html";
             document.body.appendChild(a);
