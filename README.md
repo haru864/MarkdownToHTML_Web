@@ -2,56 +2,24 @@
 
 MarkdownファイルをHTMLファイルに変換するWebアプリ
 
-# DEMO
-
-"hoge"の魅力が直感的に伝えわるデモ動画や図解を載せる
-
-# Features
-
-"hoge"のセールスポイントや差別化などを説明する
-
-# Requirement
-
-"hoge"を動かすのに必要なライブラリなどを列挙する
-
-* huga 3.5.2
-* hogehuga 1.0.2
-
-# Installation
-
-Requirementで列挙したライブラリなどのインストール方法を説明する
-
-```bash
-pip install huga_package
-```
-
 # Usage
 
-DEMOの実行方法など、"hoge"の基本的な使い方を説明する
+Webブラウザを開き、サーバーに接続します。
 
-```bash
-git clone https://github.com/hoge/~
-cd examples
-python demo.py
-```
+![Screenshot from 2024-02-28 20-23-54](https://github.com/haru864/MarkdownToHTML_Web/assets/45516420/3621f019-d4af-42ea-816e-d620bcc74389)
 
-# Note
+左側の入力欄にMarkdownを入力すると、リアルタイムでHTMLに変換され、右側に表示されます。
 
-注意点などがあれば書く
+![Screenshot from 2024-02-28 20-26-47](https://github.com/haru864/MarkdownToHTML_Web/assets/45516420/998a02df-7640-4d28-8c07-cda7cdd5c38d)
 
-# Author
+HTMLボタンを押下することで、HTMLソースを表示できます。
 
-作成情報を列挙する
+![Screenshot from 2024-02-28 20-27-07](https://github.com/haru864/MarkdownToHTML_Web/assets/45516420/7299c71c-3907-43c5-b0ad-a7a487eda876)
 
-* 作成者
-* 所属
-* E-mail
+Highlightボタンを押下することで、コード部分をハイライトできます。
 
-# License
-ライセンスを明示する
+![Screenshot from 2024-02-28 20-27-20](https://github.com/haru864/MarkdownToHTML_Web/assets/45516420/de99c597-456b-40cd-bff3-7e5f9b470f32)
 
-"hoge" is under [MIT license](https://en.wikipedia.org/wiki/MIT_License).
+Downloadボタンを押下することで、htmlファイルをダウンロードできます。
 
-社内向けなら社外秘であることを明示してる
-
-"hoge" is Confidential.
+![Screenshot from 2024-02-28 20-27-49](https://github.com/haru864/MarkdownToHTML_Web/assets/45516420/de297032-a581-4cbc-a616-a7390c556bfc)

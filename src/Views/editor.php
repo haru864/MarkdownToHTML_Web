@@ -10,7 +10,7 @@ $baseURL = Settings::env('BASE_URL');
 
 <head>
     <meta charset="UTF-8">
-    <title>HTML Sample</title>
+    <title>Markdown to HTML</title>
     <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/default.min.css">
     <link rel="stylesheet" type="text/css" href="<?= $baseURL ?>/css/style" />
 </head>
