@@ -9,23 +9,27 @@ use Throwable;
 class Logger
 {
     private static $instance = null;
-    private $logDirectory;
-    private $logFile;
+    private string $logFileDirectory;
+    private string $logFileName;
+    private bool $truncateEnabled;
+    private int $truncateLimit;
 
     private function __construct()
     {
-        $this->logDirectory = Settings::env("LOG_FILE_LOCATION");
+        $this->logFileDirectory = Settings::env("LOG_FILE_LOCATION");
+        $this->truncateEnabled = Settings::env('LOG_TRUNCATE_ENABLED') === 'true';
+        $this->truncateLimit = intval(Settings::env('LOG_TRUNCATE_LIMIT'));
         $this->initializeLogFile();
     }
 
     private function initializeLogFile(): void
     {
-        if (!file_exists($this->logDirectory)) {
-            mkdir($this->logDirectory, 0755, true);
+        if (!file_exists($this->logFileDirectory)) {
+            mkdir($this->logFileDirectory, 0755, true);
         }
-        $this->logFile = $this->logDirectory . DIRECTORY_SEPARATOR . date('Ymd') . '.log';
-        if (!file_exists($this->logFile)) {
-            file_put_contents($this->logFile, '');
+        $this->logFileName = $this->logFileDirectory . DIRECTORY_SEPARATOR . date('Ymd') . '.log';
+        if (!file_exists($this->logFileName)) {
+            file_put_contents($this->logFileName, '');
         }
     }
 
@@ -41,9 +45,9 @@ class Logger
     {
         $logEntry = '[' . date('Y-m-d H:i:s') . '] ' . strtoupper($level->value) . ' ' . $message;
         if (!empty($context)) {
-            $logEntry .= ' ' . json_encode($context);
+            $logEntry .= ' ' . json_encode($context, JSON_UNESCAPED_UNICODE);
         }
-        file_put_contents($this->logFile, $logEntry . PHP_EOL, FILE_APPEND);
+        file_put_contents($this->logFileName, $logEntry . PHP_EOL, FILE_APPEND);
     }
 
     public function logRequest(): void
@@ -58,16 +62,22 @@ class Logger
             'post_data' => $_SERVER['REQUEST_METHOD'] === 'POST' ? $_POST : 'N/A',
             'files_data' => $_SERVER['REQUEST_METHOD'] === 'POST' ? $_FILES : 'N/A'
         ];
+        if ($this->truncateEnabled) {
+            $requestInfo['post_data'] = $this->truncateArray($_POST, $this->truncateLimit);
+            $requestInfo['files_data'] = $this->truncateArray($_FILES, $this->truncateLimit);
+        }
         $this->log(LogLevel::INFO, 'Request received', ['request' => $requestInfo]);
     }
 
     public function logResponse(HttpResponse $httpResponse): void
     {
-        $MAX_LENGTH_OF_OUTPUT_MESSAGE_BODY = 100;
         $messageBody = $httpResponse->getMessageBody();
-        $outputMessageBody = substr($messageBody, 0, $MAX_LENGTH_OF_OUTPUT_MESSAGE_BODY)
-            . (strlen($messageBody) > $MAX_LENGTH_OF_OUTPUT_MESSAGE_BODY ? '...' : '');
-
+        if ($this->truncateEnabled) {
+            $outputMessageBody = substr($messageBody, 0, $this->truncateLimit)
+                . (strlen($messageBody) > $this->truncateLimit ? '...' : '');
+        } else {
+            $outputMessageBody = $messageBody;
+        }
         $responseInfo = [
             'status_code' => $httpResponse->getStatusCode() ?? 'N/A',
             'headers' => $httpResponse->getHeaders() ?? 'N/A',
@@ -79,5 +89,18 @@ class Logger
     public function logError(Throwable $e)
     {
         $this->log(LogLevel::ERROR, $e->getMessage() . PHP_EOL . $e->getTraceAsString());
+    }
+
+    private function truncateArray($array, $limit): array
+    {
+        $truncated = [];
+        foreach ($array as $key => $value) {
+            if (is_array($value)) {
+                $truncated[$key] = $this->truncateArray($value, $limit);
+            } else {
+                $truncated[$key] = strlen($value) > $limit ? substr($value, 0, $limit) . '...' : $value;
+            }
+        }
+        return $truncated;
     }
 }
