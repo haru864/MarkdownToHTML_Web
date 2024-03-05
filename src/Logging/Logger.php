@@ -10,27 +10,19 @@ class Logger
 {
     private static $instance = null;
     private string $logFileDirectory;
-    private string $logFileName;
+    private string $logFilePath;
+    private string $lockFilePath;
+    private mixed $lockFileHandle;
     private bool $truncateEnabled;
     private int $truncateLimit;
 
     private function __construct()
     {
         $this->logFileDirectory = Settings::env("LOG_FILE_LOCATION");
+        $this->lockFilePath = $this->logFileDirectory . DIRECTORY_SEPARATOR . 'lockfile';
         $this->truncateEnabled = Settings::env('LOG_TRUNCATE_ENABLED') === 'true';
         $this->truncateLimit = intval(Settings::env('LOG_TRUNCATE_LIMIT'));
-        $this->initializeLogFile();
-    }
-
-    private function initializeLogFile(): void
-    {
-        if (!file_exists($this->logFileDirectory)) {
-            mkdir($this->logFileDirectory, 0755, true);
-        }
-        $this->logFileName = $this->logFileDirectory . DIRECTORY_SEPARATOR . date('Ymd') . '.log';
-        if (!file_exists($this->logFileName)) {
-            file_put_contents($this->logFileName, '');
-        }
+        $this->deleteOldLogFiles();
     }
 
     public static function getInstance(): Logger
@@ -43,11 +35,72 @@ class Logger
 
     public function log(LogLevel $level, String $message, array $context = []): void
     {
-        $logEntry = '[' . date('Y-m-d H:i:s') . '] ' . strtoupper($level->value) . ' ' . $message;
-        if (!empty($context)) {
-            $logEntry .= ' ' . json_encode($context, JSON_UNESCAPED_UNICODE);
+        if ($this->acquireLock()) {
+            $this->setLogFile();
+            $logEntry = '[' . date('Y-m-d H:i:s') . '] ' . strtoupper($level->value) . ' ' . $message;
+            if (!empty($context)) {
+                $logEntry .= ' ' . json_encode($context, JSON_UNESCAPED_UNICODE);
+            }
+            file_put_contents($this->logFilePath, $logEntry . PHP_EOL, FILE_APPEND);
+            $this->releaseLock();
+        } else {
+            echo "Could not acquire lock, logging skipped.";
         }
-        file_put_contents($this->logFileName, $logEntry . PHP_EOL, FILE_APPEND);
+    }
+
+    private function acquireLock(): mixed
+    {
+        $this->lockFileHandle = fopen($this->lockFilePath, 'w+');
+        if ($this->lockFileHandle === false) {
+            return false;
+        }
+        if (flock($this->lockFileHandle, LOCK_EX)) {
+            return $this->lockFileHandle;
+        }
+        fclose($this->lockFileHandle);
+        return false;
+    }
+
+    private function releaseLock(): void
+    {
+        if ($this->lockFileHandle) {
+            flock($this->lockFileHandle, LOCK_UN);
+            fclose($this->lockFileHandle);
+            unlink($this->lockFilePath);
+            $this->lockFileHandle = false;
+        }
+    }
+
+    private function setLogFile(): void
+    {
+        $date = date('Ymd');
+        $files = scandir($this->logFileDirectory);
+        $maxIndex = 0;
+        foreach ($files as $file) {
+            if (preg_match("/^{$date}_(\d+)\.log$/", $file, $matches)) {
+                $index = (int)$matches[1];
+                if ($index > $maxIndex) {
+                    $maxIndex = $index;
+                }
+            }
+        }
+        $newIndex = $maxIndex;
+        $logFilePathCandidate = "{$this->logFileDirectory}/{$date}_{$newIndex}.log";
+        if ($this->isFileSizeExceeded($logFilePathCandidate)) {
+            $newIndex += 1;
+            $logFilePathCandidate = "{$this->logFileDirectory}/{$date}_{$newIndex}.log";
+        }
+        $this->logFilePath = $logFilePathCandidate;
+        if (!file_exists($this->logFilePath)) {
+            file_put_contents($this->logFilePath, '');
+        }
+    }
+
+    private function isFileSizeExceeded($filePath): bool
+    {
+        $maxLogFileSize = Settings::env('MAX_LOG_FILE_SIZE');
+        $fileSize = filesize($filePath);
+        return $fileSize > $maxLogFileSize;
     }
 
     public function logRequest(): void
@@ -91,6 +144,21 @@ class Logger
         $this->log(LogLevel::ERROR, $e->getMessage() . PHP_EOL . $e->getTraceAsString());
     }
 
+    public function logDebug(String $message, array $context = []): void
+    {
+        $this->log(LogLevel::DEBUG, $message, $context);
+    }
+
+    public function logInfo(String $message, array $context = []): void
+    {
+        $this->log(LogLevel::INFO, $message, $context);
+    }
+
+    public function logWarning(String $message, array $context = []): void
+    {
+        $this->log(LogLevel::WARNING, $message, $context);
+    }
+
     private function truncateArray($array, $limit): array
     {
         $truncated = [];
@@ -102,5 +170,30 @@ class Logger
             }
         }
         return $truncated;
+    }
+
+    private function deleteOldLogFiles(): void
+    {
+        try {
+            $files = scandir($this->logFileDirectory);
+            $currentDate = new \DateTime();
+            $logFileRetentionPeriodDays = Settings::env('LOG_FILE_RETENTION_PERIOD_DAYS');
+            foreach ($files as $file) {
+                $filePath = $this->logFileDirectory . DIRECTORY_SEPARATOR . $file;
+                if (!is_file($filePath)) {
+                    continue;
+                }
+                $fileDate = \DateTime::createFromFormat('Ymd', substr($file, 0, 8));
+                if (!$fileDate) {
+                    continue;
+                }
+                $interval = $currentDate->diff($fileDate)->days;
+                if ($interval > $logFileRetentionPeriodDays) {
+                    unlink($filePath);
+                }
+            }
+        } catch (Throwable $t) {
+            $this->logError($t);
+        }
     }
 }
