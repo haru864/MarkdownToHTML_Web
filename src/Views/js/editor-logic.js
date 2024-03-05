@@ -44,15 +44,13 @@ document.getElementById("preview-btn").addEventListener("click", async function 
     document.getElementById('html-preview').innerHTML = await convertMarkdownToHTML();
 });
 document.getElementById("html-btn").addEventListener("click", async function () {
-    document.getElementById('html-preview').innerHTML = await convertMarkdownToHTML();
-    let htmlSrc = document.getElementById('html-preview').innerHTML;
-    document.getElementById('html-preview').innerText = htmlSrc;
+    document.getElementById('html-preview').innerText = await convertMarkdownToHTML();
 });
 document.getElementById("highlight-btn").addEventListener("click", async function () {
     hljs.highlightAll();
 });
 document.getElementById("download-btn").addEventListener("click", async function () {
-    let htmlSrc = document.getElementById('html-preview').innerHTML;
+    let htmlSrc = await convertMarkdownToHTML();
     let blob = new Blob([htmlSrc], {
         type: "text/html"
     });
