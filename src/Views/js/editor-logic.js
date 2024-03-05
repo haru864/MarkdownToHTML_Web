@@ -46,7 +46,7 @@ document.getElementById("preview-btn").addEventListener("click", async function 
 document.getElementById("html-btn").addEventListener("click", async function () {
     document.getElementById('html-preview').innerHTML = await convertMarkdownToHTML();
     let htmlSrc = document.getElementById('html-preview').innerHTML;
-    document.getElementById('html-preview').textContent = htmlSrc;
+    document.getElementById('html-preview').innerText = htmlSrc;
 });
 document.getElementById("highlight-btn").addEventListener("click", async function () {
     hljs.highlightAll();

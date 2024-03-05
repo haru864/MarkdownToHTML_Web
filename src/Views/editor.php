@@ -17,8 +17,8 @@ $baseURL = Settings::env('BASE_URL');
 
 <body>
     <div class="container">
-        <div id="editor-container" style="width:800px;height:600px;border:1px solid grey"></div>
-        <div id="html-preview" style="width:800px;height:600px;border:1px solid grey"></div>
+        <div id="editor-container" style="width:800px; height:600px; border:1px solid grey;"></div>
+        <div id="html-preview" style="width:800px; height:600px; border:1px solid grey;"></div>
     </div>
     <button type="button" id="preview-btn">Preview</button>
     <button type="button" id="html-btn">HTML</button>
